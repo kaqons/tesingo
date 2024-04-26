@@ -1,40 +1,61 @@
-import useUpdatingClock from 'hooks/useUpdatingClock'
+
+'use client'
+
+import { useEffect, useState } from 'react'
+import { Input, Button, Typography } from 'antd'
+const { Title, Text } = Typography
+import { useAuthentication } from '@web/modules/authentication'
+import dayjs from 'dayjs'
+import { useSnackbar } from 'notistack'
+import { useRouter, useParams } from 'next/navigation'
+import { Api, Model } from '@web/domain'
+import { PageLayout } from '@web/layouts/Page.layout'
 
 export default function App() {
-  const {hour, minutes, seconds, amPm} = useUpdatingClock()
+  const router = useRouter()
+  const { enqueueSnackbar } = useSnackbar()
+  const [feedback, setFeedback] = useState('')
+  const [response, setResponse] = useState<string | null>(null)
+
+  useEffect(() => {
+    router.push('/home')
+  }, [router])
+
+  const handleFeedbackChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFeedback(e.target.value)
+  }
+
+  const submitFeedback = async () => {
+    try {
+      const modifiedCode = await Api.Ai.chat(feedback)
+      setResponse(modifiedCode)
+      enqueueSnackbar('Feedback submitted successfully!', { variant: 'success' })
+    } catch (error) {
+      enqueueSnackbar('Failed to submit feedback.', { variant: 'error' })
+    }
+  }
 
   return (
-    <div className="df flex-col vh-100">
-      <header className="pv24 bg-gold black-80 tc">
-        <h1 className="mt0 mb0">Create New App</h1>
-        <div>By The Qodesmith</div>
-      </header>
-
-      <section className="flex-grow-1 bg-black-80 fw4 white-80 tc pt24">
-        <div>
-          Your application starts in the{' '}
-          <code>
-            src/<span className="b white">entry.jsx</span>
-          </code>{' '}
-          file.
+    <div className="index-page">
+      <Title level={2}>Super IQ Ultra Advanced</Title>
+      <Text>Albert Einstein Super IQ Ultra Advanced</Text>
+      <div style={{ marginTop: '20px' }}>
+        <Input
+          placeholder="Enter your feedback"
+          value={feedback}
+          onChange={handleFeedbackChange}
+          style={{ marginBottom: '10px' }}
+        />
+        <Button type="primary" onClick={submitFeedback}>
+          Submit Feedback
+        </Button>
+      </div>
+      {response && (
+        <div style={{ marginTop: '20px' }}>
+          <Title level={4}>AI Response:</Title>
+          <Text>{response}</Text>
         </div>
-
-        <div>
-          The component you're looking here at can be found in{' '}
-          <code>
-            src/components/<span className="b white">App.jsx</span>
-          </code>
-        </div>
-
-        <div>
-          Now go! Save the world with <span className="gold">JavaScript</span>!
-        </div>
-
-        <div className="pa16 f-1-5em">
-          {hour}:{minutes}:{seconds}
-          <span className="f-initial pl4">{amPm}</span>
-        </div>
-      </section>
+      )}
     </div>
   )
 }
